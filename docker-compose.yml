@@ -1,0 +1,18 @@
+services:
+  research-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8787:8787"
+
+  research-frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../k8s/frontend.Dockerfile
+    depends_on:
+      - research-backend
+    ports:
+      - "5173:80"

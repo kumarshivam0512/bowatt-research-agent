@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: research-backend
+spec:
+  replicas: 1 # vector store and upload queue are in-process
+  selector:
+    matchLabels: { app: research-backend }
+  template:
+    metadata:
+      labels: { app: research-backend }
+    spec:
+      containers:
+        - name: backend
+          image: research-agent-backend:local
+          ports: [{ containerPort: 8787 }]
+          envFrom: [{ secretRef: { name: research-agent-env } }]
+          readinessProbe:
+            httpGet: { path: /api/sources, port: 8787 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: research-backend
+spec:
+  type: LoadBalancer
+  selector: { app: research-backend }
+  ports: [{ port: 8787, targetPort: 8787 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: research-frontend
+spec:
+  selector:
+    matchLabels: { app: research-frontend }
+  template:
+    metadata:
+      labels: { app: research-frontend }
+    spec:
+      containers:
+        - name: frontend
+          image: research-agent-frontend:local
+          ports: [{ containerPort: 80 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: research-frontend
+spec:
+  type: LoadBalancer
+  selector: { app: research-frontend }
+  ports: [{ port: 5173, targetPort: 80 }]
